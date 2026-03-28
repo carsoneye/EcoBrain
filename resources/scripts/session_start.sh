@@ -8,28 +8,31 @@ echo ""
 
 if [ -f "$BRAIN/context/project.md" ]; then
   PROJECT_PATH=$(grep -oP 'Path\s*\|\s*`\K[^`]+' "$BRAIN/context/project.md" 2>/dev/null | head -1)
-  LAST_ANALYZED=$(grep -oP 'Last Analyzed\s*\|\s*\K.*' "$BRAIN/context/project.md" 2>/dev/null | head -1)
-  echo "Project: $PROJECT_PATH"
-  echo "Last Analyzed: $LAST_ANALYZED"
+  LAST_ANALYZED=$(grep -oP 'Last Analyzed\s*\|\s*\K\S+' "$BRAIN/context/project.md" 2>/dev/null | head -1)
+  echo "Project: ${PROJECT_PATH:-not set}"
+  echo "Last Analyzed: ${LAST_ANALYZED:-never}"
   echo ""
 fi
 
 echo "--- Recommendations ---"
 if [ -f "$BRAIN/recommendations/index.md" ]; then
-  REC_COUNT=$(grep -cE "^\|" "$BRAIN/recommendations/index.md" 2>/dev/null)
-  echo "  $REC_COUNT recommendation rows"
+  OPEN=$(grep -cE "^\|.*\|" "$BRAIN/recommendations/index.md" 2>/dev/null | head -1)
+  echo "  ${OPEN:-0} recommendation rows"
 fi
 echo ""
 
 echo "--- Analysis Status ---"
-for file in "$BRAIN"/analysis/*.md; do
+for file in "$BRAIN"/analysis/*.md "$BRAIN"/architecture/*.md "$BRAIN"/context/*.md; do
   if [ -f "$file" ]; then
     name=$(basename "$file" .md)
-    empty_rows=$(grep -cE "^\|\s*\|\s*\|\s*\|" "$file" 2>/dev/null)
-    if [ "$empty_rows" -gt 3 ]; then
-      echo "  $name: needs extraction"
+    dir=$(basename "$(dirname "$file")")
+    # Count empty table cells — a populated row has content between pipes
+    empty=$(grep -cE '^\|\s+\|' "$file" 2>/dev/null)
+    total=$(grep -cE '^\|' "$file" 2>/dev/null)
+    if [ "$empty" -gt 5 ]; then
+      echo "  $dir/$name: needs extraction"
     else
-      echo "  $name: populated"
+      echo "  $dir/$name: populated (${total} rows)"
     fi
   fi
 done

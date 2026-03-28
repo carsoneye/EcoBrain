@@ -2,7 +2,7 @@
 name: audit
 description: Project health check. Validates analysis freshness, identifies coverage gaps, and catches drift between the codebase and documented analysis.
 disable-model-invocation: true
-allowed-tools: Read Write Glob Grep Bash(ls * find *)
+allowed-tools: Read Write Glob Grep Bash(ls *) Bash(find *)
 ---
 
 # Audit

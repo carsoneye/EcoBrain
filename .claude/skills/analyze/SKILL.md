@@ -2,7 +2,7 @@
 name: analyze
 description: Extract everything from a codebase. Full extraction on first run, incremental consolidation on updates. Scans tech stack, architecture, patterns, quality, security, and testing.
 disable-model-invocation: true
-allowed-tools: Read Write Glob Grep Bash(ls * find *)
+allowed-tools: Read Write Glob Grep Bash(ls *) Bash(find *) Bash(wc *) Bash(head *) Bash(cat *)
 ---
 
 # Analyze
@@ -23,7 +23,8 @@ Point at a codebase and extract everything. Consolidates on repeat runs — does
 3. Check mode:
    - If `Last Analyzed` is empty → **Full** mode
    - If `Last Analyzed` has a date → **Update** mode
-4. Confirm: "`{Full|Update}` analysis of `{path}`. This may take a few minutes."
+4. **Optional pre-scan** — run `bash resources/scripts/extract-stats.sh $PROJECT_PATH` to get a quick codebase overview before deep analysis
+5. Confirm: "`{Full|Update}` analysis of `{path}`. This may take a few minutes."
 
 ## Update Mode: Consolidation Rules
 
