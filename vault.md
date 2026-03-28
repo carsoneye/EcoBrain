@@ -9,15 +9,15 @@ Persistent knowledge base. Structured analysis, failure knowledge, and decision 
 
 ## Coverage
 
-| Project | Last Analyzed | Status |
-|---------|--------------|--------|
-| exocortex | — | not yet analyzed |
+| Project | Last Analyzed | Status | Files Populated |
+|---------|--------------|--------|----------------|
+| exocortex | 2026-03-28 | Pre-scaffold (specs only) | 11/11 |
 
 ## Global Knowledge
 
 | Area | Files | Status |
 |------|-------|--------|
-| failures/ | [electron-stack.md](_global/failures/electron-stack.md) | 9 entries (migrated from Exocortex CLAUDE.md rules) |
+| failures/ | [electron-stack.md](_global/failures/electron-stack.md) | 9 entries (migrated from Exocortex rules) |
 | preferences/ | — | empty |
 | verified-as-of/ | [better-sqlite3](_global/verified-as-of/better-sqlite3.md), [chokidar](_global/verified-as-of/chokidar.md), [mcpvault](_global/verified-as-of/mcpvault.md), [xterm](_global/verified-as-of/xterm.md) | 4 entries, all verified 2026-03-28 |
 
@@ -32,6 +32,6 @@ _global/              Cross-project knowledge
 projects/<name>/      Per-project analysis
   context/            Architecture, tech stack, project identity
   analysis/           Quality, security, patterns, testing
-  decisions/          Decision journal (time-indexed, not ADRs)
+  decisions/          Decision journal + recommendations
   failures/           Project-specific failures
 ```
