@@ -176,6 +176,10 @@ OUTPUT:  summary + session log
 
 Reads project analysis + `_global/` knowledge, generates prioritized plan.
 
+### query
+
+Ask the brain a question. Classifies intent (failure, architecture, package safety, etc.), routes to the right files, checks staleness, synthesizes an answer with citations and confidence level.
+
 ### audit
 
 Health check: freshness, coverage gaps, broken links, stale verified-as-of entries, codebase drift.

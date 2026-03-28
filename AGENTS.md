@@ -50,3 +50,4 @@ codebase → analyze → projects/<name>/[context, analysis]
 | `analyze` | Extract everything from a codebase into `projects/<name>/` |
 | `recommend` | Generate prioritized recommendations, cross-reference with `_global/` |
 | `audit` | Vault health check (staleness, coverage, drift, verified-as-of expiry) |
+| `query` | Ask the brain a question — routes to right files, synthesizes answer with citations |
