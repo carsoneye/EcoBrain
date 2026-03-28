@@ -1,12 +1,11 @@
 ---
 paths:
-  - "sessions/**/*.md"
+  - "projects/*/analysis/sessions/**/*.md"
 ---
 
 # Session Rules
 
-- Session logs: `YYYY-MM-DD-HH_MM-topic.md` format
-- Quick Reference header (topics, outcome) above `---` separator
-- Raw log below separator
-- Cross-reference findings with [[wikilinks]]
+- Filename: `YYYY-MM-DD.md`
+- Four fields only: commits since last analysis, files changed, metric deltas, notable (freeform)
+- One file per analysis run
 - Keep it scannable — bullets over paragraphs

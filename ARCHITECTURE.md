@@ -1,6 +1,6 @@
 ---
 type: documentation
-date: 2026-03-27
+date: 2026-03-28
 tags: [documentation, architecture, how-it-works]
 ---
 
@@ -8,9 +8,9 @@ tags: [documentation, architecture, how-it-works]
 
 ## What It Is
 
-EcoBrain is a project analysis engine. You point it at a codebase and it extracts everything — tech stack, architecture, patterns, quality, security, testing — then generates prioritized recommendations. It's a knowledge base that grows with the project.
+EcoBrain is a persistent knowledge base. You point it at codebases and it extracts structured analysis that compounds over time. Cross-project knowledge (failure patterns, package gotchas) persists and transfers between projects.
 
-It's not an app. It's a structured markdown vault that AI tools (Claude Code, opencode, Cursor) read and write through skills.
+It's not an app. It's a structured markdown vault that Claude Code reads and writes through skills.
 
 ---
 
@@ -24,11 +24,11 @@ It's not an app. It's a structured markdown vault that AI tools (Claude Code, op
                        │
           ┌────────────▼────────────┐
           │      AI TOOL LAYER      │
-          │  (Claude Code / opencode)│
+          │      (Claude Code)      │
           │                         │
           │  reads:  AGENTS.md      │
           │          CLAUDE.md      │
-          │          context/*.md   │
+          │          vault.md       │
           │          .claude/rules/  │
           │          .claude/skills/ │
           └────────────┬────────────┘
@@ -44,12 +44,15 @@ It's not an app. It's a structured markdown vault that AI tools (Claude Code, op
         ┌──────────────▼──────────────┐
         │        VAULT LAYER          │
         │                             │
-        │  context/   → what it is    │
-        │  architecture/ → how built  │
-        │  analysis/  → how good      │
-        │  decisions/ → what was chosen│
-        │  recommendations/ → what to do│
-        │  sessions/  → what happened │
+        │  _global/                   │
+        │    failures/  → stack traps │
+        │    verified/  → pkg status  │
+        │                             │
+        │  projects/<name>/           │
+        │    context/   → what it is  │
+        │    analysis/  → how good    │
+        │    decisions/ → what chosen │
+        │    failures/  → proj traps  │
         └──────────────┬──────────────┘
                        │
           ┌────────────▼────────────┐
@@ -67,254 +70,133 @@ It's not an app. It's a structured markdown vault that AI tools (Claude Code, op
   CODEBASE
      │
      ▼
- ┌──────────┐     writes      ┌──────────────┐
- │  analyze  │───────────────►│  context/     │
- │  (skill)  │                │  architecture/│
- └──────────┘                 │  analysis/    │
-     │                        └──────────────┘
-     │ reads existing                    │
-     ▼                                   │
- ┌──────────┐     writes      ┌──────────▼───┐
- │ recommend │───────────────►│ recommendations│
- │  (skill)  │                │  decisions/    │
- └──────────┘                 └───────────────┘
-     │                               │
-     │ re-checks            checks drift
-     ▼                               ▼
- ┌──────────┐     updates    ┌──────────────┐
- │   audit   │──────────────►│  all files    │
- │  (skill)  │               └──────────────┘
- └──────────┘
+ ┌──────────┐     writes      ┌────────────────────┐
+ │  analyze  │───────────────►│  projects/<name>/   │
+ │  (skill)  │                │    context/         │
+ └──────────┘                 │    analysis/        │
+     │                        └────────────────────┘
+     │ also writes                         │
+     ▼                                     │
+ ┌──────────────┐                          │
+ │  _global/     │                          │
+ │  failures/    │◄── stack failures found  │
+ │  verified/    │◄── pkg versions checked  │
+ └──────────────┘                          │
+                                           │
+ ┌──────────┐     writes      ┌────────────▼───────┐
+ │ recommend │───────────────►│  projects/<name>/   │
+ │  (skill)  │   reads both   │    decisions/       │
+ └──────────┘   project +     └────────────────────┘
+     │          _global/               │
+     │                        checks drift
+     ▼                                 ▼
+ ┌──────────┐     updates    ┌────────────────────┐
+ │   audit   │──────────────►│  all files          │
+ │  (skill)  │               │  + staleness check  │
+ └──────────┘               └────────────────────┘
 ```
 
 ### First Run (Full Mode)
 
 ```
-1. User sets PROJECT_PATH in context/project.md
-2. analyze skill scans the codebase
-3. Phase 1: Extracts context (tech stack, file structure)
-4. Phase 2: Maps architecture (components, data flow, API surface)
-5. Phase 3: Runs analysis (patterns, quality, security, testing)
-6. Writes 11 structured files to the vault
-7. User runs recommend skill
-8. recommend cross-references all findings
-9. Generates prioritized action plan with effort/impact ratings
-10. Proposes ADRs for architectural decisions
+1. User runs /analyze
+2. Skill asks for project name and codebase path
+3. Creates projects/<name>/ with subdirectories
+4. Phase 1: Extracts context (tech stack, file structure)
+5. Phase 2: Maps architecture (components, data flow, API surface)
+6. Phase 3: Runs analysis (patterns, quality, security, testing)
+7. Writes structured files to projects/<name>/
+8. Discovers stack failures → appends to _global/failures/
+9. User runs /recommend to generate action plan
 ```
 
 ### Update Run (Consolidation Mode)
 
 ```
-1. User runs analyze again (days/weeks later)
-2. analyze detects "Last Analyzed" date → switches to Update mode
+1. User runs /analyze again (days/weeks later)
+2. Detects existing "Last Analyzed" date → Update mode
 3. Re-scans codebase, diffs against existing vault
-4. New findings → appended to existing files
-5. Resolved issues → marked [resolved YYYY-MM-DD]
-6. Adds "Changes Since YYYY-MM-DD" changelog at top
-7. recommend re-checks open items, marks done ones [x]
-8. New findings → new recommendations added
-9. Nothing deleted — brain accumulates knowledge
+4. New findings appended, resolved items marked [resolved YYYY-MM-DD]
+5. "Changes Since YYYY-MM-DD" changelog at top of updated files
+6. Session log written to projects/<name>/analysis/sessions/
+7. Nothing deleted — brain accumulates knowledge
 ```
 
 ---
 
 ## File Map
 
-### Context Layer — "What it is"
+### Global Layer — Cross-project knowledge
 
 | File | Purpose | Who writes |
 |------|---------|-----------|
-| `context/project.md` | Project identity, path, quick stats | User + analyze |
-| `context/tech-stack.md` | Languages, frameworks, deps, versions | analyze |
-| `context/structure.md` | Directory tree with purpose annotations | analyze |
+| `_global/failures/<stack>.md` | Stack failure patterns | analyze, manual |
+| `_global/verified-as-of/<pkg>.md` | Timestamped package status | analyze, manual |
+| `_global/preferences/` | Dev preferences | manual |
+| `vault.md` | Index: projects, coverage, status | analyze, audit |
 
-### Architecture Layer — "How it's built"
-
-| File | Purpose | Who writes |
-|------|---------|-----------|
-| `architecture/overview.md` | Pattern, data flow diagram, integrations | analyze |
-| `architecture/components.md` | Module map, hierarchy, shared utils | analyze |
-| `architecture/data-flow.md` | Request lifecycle, data stores, state | analyze |
-| `architecture/api-surface.md` | REST endpoints, GraphQL, public exports | analyze |
-
-### Analysis Layer — "How good it is"
+### Project Layer — `projects/<name>/`
 
 | File | Purpose | Who writes |
 |------|---------|-----------|
-| `analysis/patterns.md` | Design patterns, anti-patterns, conventions | analyze |
-| `analysis/quality.md` | Hot spots, tech debt, dead code, complexity | analyze |
-| `analysis/security.md` | Auth, secrets, CVEs, input validation | analyze |
-| `analysis/testing.md` | Coverage, strategy, gaps, test quality | analyze |
-
-### Action Layer — "What to do"
-
-| File | Purpose | Who writes |
-|------|---------|-----------|
-| `recommendations/index.md` | Prioritized action plan with effort/impact | recommend |
-| `decisions/index.md` | Architectural Decision Records | recommend |
-
-### Operational Layer
-
-| File | Purpose | Who writes |
-|------|---------|-----------|
-| `sessions/` | Analysis session logs | AI tool (manual) |
-| `resources/templates/` | Note templates for each file type | static |
-| `resources/scripts/` | session_start.sh, extract-stats.sh, verify_orphans.sh | static |
+| `context/project.md` | Project identity, path, stats | User + analyze |
+| `context/tech-stack.md` | Languages, frameworks, deps | analyze |
+| `context/structure.md` | Directory tree with annotations | analyze |
+| `context/architecture-overview.md` | Pattern, data flow, integrations | analyze |
+| `context/architecture-components.md` | Module map, hierarchy | analyze |
+| `context/architecture-data-flow.md` | Request lifecycle, state | analyze |
+| `context/architecture-api-surface.md` | Endpoints, exports, webhooks | analyze |
+| `analysis/patterns.md` | Design patterns, anti-patterns | analyze |
+| `analysis/quality.md` | Hot spots, tech debt, complexity | analyze |
+| `analysis/security.md` | Auth, secrets, CVEs, validation | analyze |
+| `analysis/testing.md` | Coverage, strategy, gaps | analyze |
+| `analysis/sessions/YYYY-MM-DD.md` | Session logs (4 fields) | analyze |
+| `decisions/index.md` | Decision journal | recommend, manual |
+| `decisions/recommendations.md` | Prioritized action plan | recommend |
+| `failures/` | Project-specific failure patterns | manual |
 
 ---
 
-## Skills Deep Dive
+## Skills
 
 ### analyze
 
-The extraction engine. Three phases, 11 output files.
+The extraction engine. Three phases, project-namespaced output.
 
 ```
-INPUT:  PROJECT_PATH from context/project.md
-PHASE 1: Context     → 3 files  (tech stack, structure, project stats)
-PHASE 2: Architecture → 4 files (overview, components, data flow, API)
-PHASE 3: Analysis    → 4 files  (patterns, quality, security, testing)
-OUTPUT: summary printed to console
+INPUT:  Project name + codebase path
+PHASE 1: Context      → 3 files  (tech stack, structure, project stats)
+PHASE 2: Architecture → 4 files  (overview, components, data flow, API)
+PHASE 3: Analysis     → 4 files  (patterns, quality, security, testing)
+SIDE:    _global/     → failures and verified-as-of entries
+OUTPUT:  summary + session log
 ```
-
-**Full mode** (no previous analysis): Writes everything from scratch.
-
-**Update mode** (existing analysis found):
-- Replaces: tech stack tables, file structure, quality metrics, API surface
-- Merges: patterns, anti-patterns, tech debt, security findings, test gaps
-- Appends: new findings, resolved markers, changelog header
-
-Pre-scan available: `bash resources/scripts/extract-stats.sh $PROJECT_PATH` gives a quick overview before deep analysis.
 
 ### recommend
 
-The action generator. Reads everything analyze produced, cross-references findings, outputs a plan.
-
-```
-INPUT:  All files in context/, architecture/, analysis/
-PROCESS: Cross-reference findings across files
-         Connect anti-patterns → affected components
-         Connect tech debt → architecture decisions that caused it
-         Connect security findings → exposed endpoints
-         Connect test gaps → untested data flows
-OUTPUT: recommendations/index.md (sorted by impact/effort)
-        decisions/index.md (ADRs for implied decisions)
-```
-
-**Quick wins** (High impact + S effort) float to top.
-Every recommendation traces back to at least one finding.
+Reads project analysis + `_global/` knowledge, generates prioritized plan.
 
 ### audit
 
-The health check. Verifies the brain is fresh and complete.
-
-```
-CHECKS:
-  1. Analysis freshness — is codebase newer than last analysis?
-  2. Coverage gaps — which files are still template stubs?
-  3. Broken wikilinks — do all [[links]] resolve?
-  4. Orphan notes — any disconnected files?
-  5. Stale recommendations — items that might be done?
-  6. Missing frontmatter — any files without YAML?
-  7. Codebase drift — new files/deps not in context?
-```
+Health check: freshness, coverage gaps, broken links, stale verified-as-of entries, codebase drift.
 
 ---
 
 ## Hooks
 
-Hooks run automatically in Claude Code. They inject context so every session starts informed.
-
 | Hook | When | What it does |
 |------|------|-------------|
-| `SessionStart` | New session opens | Runs `session_start.sh` — prints project path, last analyzed date, recommendation count, analysis status per file |
-| `PostCompact` | Context window compressed | Same as SessionStart — re-injects context that was lost |
+| `SessionStart` | New session | Runs `session_start.sh` — prints all projects, analysis status, stale entries |
+| `PostCompact` | Context compressed | Same — re-injects context |
 | `Stop` | Session ends | Shows git status of uncommitted vault changes |
-
-### session_start.sh output
-
-```
-=== EcoBrain ===
-
-Project: ~/Desktop/MyApp
-Last Analyzed: 2026-03-27
-
---- Recommendations ---
-  12 recommendation rows
-
---- Analysis Status ---
-  analysis/patterns: populated (18 rows)
-  analysis/quality: populated (24 rows)
-  analysis/security: populated (15 rows)
-  analysis/testing: needs extraction
-  architecture/api-surface: populated (32 rows)
-  architecture/components: populated (14 rows)
-  ...
-
-=== Ready ===
-```
-
----
-
-## Rules
-
-Path-scoped rules that apply automatically when AI tools read/write matching files.
-
-| Rule | Path | Key Constraints |
-|------|------|----------------|
-| `context.md` | `context/**/*.md` | Source of truth, append-only, every claim needs file path |
-| `architecture.md` | `architecture/**/*.md` | Describe what IS, not what should be. Changes go to recommendations |
-| `analysis.md` | `analysis/**/*.md` | Every finding needs file:line. Evidence only, no opinions |
-| `recommendations.md` | `recommendations/**/*.md` | Every rec traces to a finding. Effort + impact required |
-| `decisions.md` | `decisions/**/*.md` | ADR format. Numbered. Never deleted, only superseded |
-| `sessions.md` | `sessions/**/*.md` | Date-stamped. Quick ref above separator, raw log below |
-| `resources.md` | `resources/**/*.md` | Templates use `{{placeholders}}`. One per type |
-
----
-
-## Configuration Files
-
-| File | Tool | Purpose |
-|------|------|---------|
-| `AGENTS.md` | All AI tools | Project overview, structure, rules, skill list |
-| `CLAUDE.md` | Claude Code | Behavior rules, write-back targets. Includes `@context/project.md` |
-| `opencode.json` | opencode | Instruction files, MCP vault server config |
-| `.claude/settings.json` | Claude Code | Permissions, hooks, allowed/denied commands |
-| `.claude/rules/*.md` | Claude Code | Path-scoped rules that activate per-file |
-| `.claude/skills/*/SKILL.md` | Claude Code | Skill definitions with allowed-tools |
-
----
-
-## Typical Usage
-
-```
-# 1. First time — point at a project
-Edit context/project.md → set Path
-
-# 2. Run full analysis
-/analyze
-
-# 3. Get recommendations
-/recommend
-
-# 4. Weeks later, project has grown
-/analyze          # update mode — consolidates, preserves history
-
-# 5. Check brain health
-/audit            # flags stale analysis, drift, gaps
-
-# 6. Periodic refresh
-/analyze          # repeat — brain gets smarter each time
-/recommend        # updated plan reflecting new state
-```
 
 ---
 
 ## Design Principles
 
-1. **Read-only on the target** — EcoBrain never modifies the codebase it's analyzing
-2. **Accumulate, don't replace** — update mode preserves history, marks resolved items
-3. **Evidence over opinion** — every finding references file paths and line numbers
-4. **Actionable output** — recommendations have effort estimates and impact ratings
-5. **Tool-agnostic** — works with any AI that reads markdown (Claude Code, opencode, Cursor)
-6. **Zero config** — set one path, run analyze. That's it
+1. **Read-only on targets** — EcoBrain never modifies analyzed codebases
+2. **Read-write on itself** — Tools and projects can write failure entries to the vault
+3. **Accumulate, don't replace** — update mode preserves history, marks resolved items
+4. **Evidence over opinion** — every finding references file paths and line numbers
+5. **Knowledge depreciates** — package entries have re-verify dates, staleness is flagged
+6. **Built for Claude Code** — not locked to it, but hooks/skills/rules are Claude Code-specific

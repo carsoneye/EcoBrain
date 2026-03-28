@@ -1,11 +1,11 @@
 ---
 paths:
-  - "context/**/*.md"
+  - "projects/*/context/**/*.md"
 ---
 
 # Context Files Rules
 
-- These are source of truth for project metadata
+- Source of truth for project metadata and architecture
 - Append new information, preserve existing content
 - Every claim references a file path in the target codebase
 - Updated by the `analyze` skill, not manually

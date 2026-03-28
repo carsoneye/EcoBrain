@@ -1,12 +1,12 @@
 ---
 paths:
-  - "decisions/**/*.md"
+  - "projects/*/decisions/**/*.md"
 ---
 
 # Decision Rules
 
-- ADR format: Context, Decision, Consequences
-- Number sequentially: ADR-001, ADR-002, etc.
-- Status: Proposed → Accepted → (Deprecated | Superseded)
-- Never delete ADRs — supersede them with new ones
-- Cross-reference from analysis and architecture docs
+- Decision journal format: time-indexed entries with date, context, what was tried, what happened
+- Failed approaches are as valuable as successful ones — record both
+- Never delete entries — supersede with a new dated entry referencing the old one
+- Recommendations include effort (S/M/L) and impact (Low/Med/High)
+- Every recommendation traces back to at least one finding in analysis/
