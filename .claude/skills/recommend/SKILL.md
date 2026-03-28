@@ -50,9 +50,15 @@ Sort by impact (High → Low), then effort (S → L) within each impact tier.
 
 ### Step 5: Write
 
-1. Update `recommendations/index.md` with the full prioritized list
-2. For each architectural decision implied, add an ADR to `decisions/index.md`
-3. Update `context/project.md` with "Last Analyzed" date
+1. Read existing `recommendations/index.md` first
+2. Preserve completed `[x]` recommendations — they're a record of progress
+3. Re-check open `[ ]` recommendations against current analysis:
+   - Finding resolved → mark `[x] done YYYY-MM-DD`
+   - Still valid → keep, update effort/impact if needed
+4. Add new recommendations for new findings
+5. Re-sort the full list by impact/effort (completed items go to bottom)
+6. For each architectural decision implied, add an ADR to `decisions/index.md`
+7. Update `context/project.md` with "Last Analyzed" date
 
 ### Step 6: Present Summary
 
